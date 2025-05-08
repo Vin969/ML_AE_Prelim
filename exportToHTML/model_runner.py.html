@@ -1,0 +1,101 @@
+<html>
+<head>
+<title>model_runner.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #0033b3;}
+.s1 { color: #080808;}
+.s2 { color: #8c8c8c; font-style: italic;}
+.s3 { color: #067d17;}
+.s4 { color: #1750eb;}
+.s5 { color: #0037a6;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+model_runner.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">os</span>
+<span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">import </span><span class="s1">matplotlib.pyplot </span><span class="s0">as </span><span class="s1">plt</span>
+<span class="s0">import </span><span class="s1">seaborn </span><span class="s0">as </span><span class="s1">sns</span>
+<span class="s0">from </span><span class="s1">sklearn.model_selection </span><span class="s0">import </span><span class="s1">train_test_split</span>
+<span class="s0">from </span><span class="s1">sklearn.linear_model </span><span class="s0">import </span><span class="s1">LogisticRegression</span>
+<span class="s0">from </span><span class="s1">sklearn.metrics </span><span class="s0">import </span><span class="s1">accuracy_score, confusion_matrix, roc_curve, auc</span>
+
+<span class="s2"># model_runner.py</span>
+<span class="s2"># Loads data, trains a logistic regression model, and saves evaluation plots.</span>
+
+<span class="s0">def </span><span class="s1">run_model(data_file=</span><span class="s3">&quot;materials_data.csv&quot;</span><span class="s1">, save_dir=</span><span class="s3">&quot;figures&quot;</span><span class="s1">):</span>
+    <span class="s2">&quot;&quot;&quot; 
+    Trains a logistic regression model on the dataset and saves plots to disk. 
+ 
+    Parameters: 
+        data_file (str): Path to the CSV file with experiment data. 
+        save_dir (str): Folder where plots will be saved. 
+    &quot;&quot;&quot;</span>
+    <span class="s1">df = pd.read_csv(data_file)</span>
+
+    <span class="s1">features = [</span><span class="s3">&quot;temperature&quot;</span><span class="s1">, </span><span class="s3">&quot;spin_speed&quot;</span><span class="s1">, </span><span class="s3">&quot;solvent_ratio&quot;</span><span class="s1">, </span><span class="s3">&quot;deposition_time&quot;</span><span class="s1">]</span>
+    <span class="s1">X = df[features]</span>
+    <span class="s1">y = df[</span><span class="s3">&quot;success&quot;</span><span class="s1">]</span>
+
+    <span class="s1">X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=</span><span class="s4">0.2</span><span class="s1">, random_state=</span><span class="s4">42</span><span class="s1">)</span>
+
+    <span class="s1">model = LogisticRegression(max_iter=</span><span class="s4">1000</span><span class="s1">)</span>
+    <span class="s1">model.fit(X_train, y_train)</span>
+
+    <span class="s1">y_pred = model.predict(X_test)</span>
+    <span class="s1">y_prob = model.predict_proba(X_test)[:, </span><span class="s4">1</span><span class="s1">]</span>
+
+    <span class="s1">acc = accuracy_score(y_test, y_pred)</span>
+    <span class="s1">print(</span><span class="s3">&quot;Logistic Regression Accuracy:&quot;</span><span class="s1">, round(acc, </span><span class="s4">2</span><span class="s1">))</span>
+
+    <span class="s2"># Make sure the output folder exists</span>
+    <span class="s1">os.makedirs(save_dir, exist_ok=</span><span class="s0">True</span><span class="s1">)</span>
+
+    <span class="s2"># === Plot 1: Confusion Matrix ===</span>
+    <span class="s1">cm = confusion_matrix(y_test, y_pred, labels=[</span><span class="s4">1</span><span class="s1">, </span><span class="s4">0</span><span class="s1">])</span>
+    <span class="s1">plt.figure()</span>
+    <span class="s1">sns.heatmap(cm, annot=</span><span class="s0">True</span><span class="s1">, fmt=</span><span class="s3">'d'</span><span class="s1">, cmap=</span><span class="s3">'Blues'</span><span class="s1">)</span>
+    <span class="s1">plt.title(</span><span class="s3">&quot;Confusion Matrix&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.xlabel(</span><span class="s3">&quot;Predicted&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.ylabel(</span><span class="s3">&quot;Actual&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.tight_layout()</span>
+    <span class="s1">plt.savefig(os.path.join(save_dir, </span><span class="s3">&quot;confusion_matrix.png&quot;</span><span class="s1">), dpi=</span><span class="s4">300</span><span class="s1">)</span>
+    <span class="s1">plt.close()</span>
+
+    <span class="s2"># === Plot 2: ROC Curve ===</span>
+    <span class="s1">fpr, tpr, _ = roc_curve(y_test, y_prob)</span>
+    <span class="s1">roc_auc = auc(fpr, tpr)</span>
+
+    <span class="s1">plt.figure()</span>
+    <span class="s1">plt.plot(fpr, tpr, label=</span><span class="s3">f&quot;AUC = </span><span class="s5">{</span><span class="s1">roc_auc</span><span class="s5">:</span><span class="s3">.2f</span><span class="s5">}</span><span class="s3">&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.plot([</span><span class="s4">0</span><span class="s1">, </span><span class="s4">1</span><span class="s1">], [</span><span class="s4">0</span><span class="s1">, </span><span class="s4">1</span><span class="s1">], linestyle=</span><span class="s3">&quot;--&quot;</span><span class="s1">, color=</span><span class="s3">&quot;gray&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.title(</span><span class="s3">&quot;ROC Curve&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.xlabel(</span><span class="s3">&quot;False Positive Rate&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.ylabel(</span><span class="s3">&quot;True Positive Rate&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.legend()</span>
+    <span class="s1">plt.tight_layout()</span>
+    <span class="s1">plt.savefig(os.path.join(save_dir, </span><span class="s3">&quot;roc_curve.png&quot;</span><span class="s1">), dpi=</span><span class="s4">300</span><span class="s1">)</span>
+    <span class="s1">plt.close()</span>
+
+    <span class="s2"># === Plot 3: Feature Importance ===</span>
+    <span class="s1">coeffs = model.coef_[</span><span class="s4">0</span><span class="s1">]</span>
+    <span class="s1">importance = pd.Series(coeffs, index=features).sort_values()</span>
+
+    <span class="s1">plt.figure()</span>
+    <span class="s1">importance.plot(kind=</span><span class="s3">&quot;barh&quot;</span><span class="s1">, color=</span><span class="s3">&quot;skyblue&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.title(</span><span class="s3">&quot;Feature Importance (Model Coefficients)&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.xlabel(</span><span class="s3">&quot;Coefficient Value&quot;</span><span class="s1">)</span>
+    <span class="s1">plt.tight_layout()</span>
+    <span class="s1">plt.savefig(os.path.join(save_dir, </span><span class="s3">&quot;feature_importance.png&quot;</span><span class="s1">), dpi=</span><span class="s4">300</span><span class="s1">)</span>
+    <span class="s1">plt.close()</span>
+
+<span class="s0">if </span><span class="s1">__name__ == </span><span class="s3">&quot;__main__&quot;</span><span class="s1">:</span>
+    <span class="s1">run_model()</span>
+</pre>
+</body>
+</html>

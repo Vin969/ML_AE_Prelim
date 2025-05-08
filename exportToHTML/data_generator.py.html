@@ -1,0 +1,80 @@
+<html>
+<head>
+<title>data_generator.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #0033b3;}
+.s1 { color: #080808;}
+.s2 { color: #8c8c8c; font-style: italic;}
+.s3 { color: #1750eb;}
+.s4 { color: #067d17;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+data_generator.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">import </span><span class="s1">numpy </span><span class="s0">as </span><span class="s1">np</span>
+<span class="s0">import </span><span class="s1">os</span>
+
+
+<span class="s2"># data_generator.py</span>
+<span class="s2"># Creates synthetic materials synthesis data and saves it to a CSV file.</span>
+
+<span class="s0">def </span><span class="s1">make_data(n=</span><span class="s3">10</span><span class="s1">):</span>
+    <span class="s2">&quot;&quot;&quot; 
+    Generates a batch of synthetic experiment data. 
+ 
+    Each row includes temperature, spin speed, solvent ratio, and deposition time, 
+    plus a binary success label based on some simple rules. 
+ 
+    Parameters: 
+        n (int): Number of data points to generate. 
+ 
+    Returns: 
+        pd.DataFrame: The generated dataset. 
+    &quot;&quot;&quot;</span>
+    <span class="s1">temp = np.random.uniform(</span><span class="s3">80</span><span class="s1">, </span><span class="s3">200</span><span class="s1">, n)</span>
+    <span class="s1">speed = np.random.uniform(</span><span class="s3">1000</span><span class="s1">, </span><span class="s3">4000</span><span class="s1">, n)</span>
+    <span class="s1">ratio = np.random.uniform(</span><span class="s3">0.2</span><span class="s1">, </span><span class="s3">0.8</span><span class="s1">, n)</span>
+    <span class="s1">time = np.random.uniform(</span><span class="s3">10</span><span class="s1">, </span><span class="s3">60</span><span class="s1">, n)</span>
+
+    <span class="s2"># Basic logic for success: tuned to favor moderate process conditions</span>
+    <span class="s1">success = (</span>
+            <span class="s1">(temp &gt; </span><span class="s3">120</span><span class="s1">) &amp;</span>
+            <span class="s1">(speed &gt; </span><span class="s3">1500</span><span class="s1">) &amp; (speed &lt; </span><span class="s3">3500</span><span class="s1">) &amp;</span>
+            <span class="s1">(ratio &gt; </span><span class="s3">0.3</span><span class="s1">) &amp; (ratio &lt; </span><span class="s3">0.7</span><span class="s1">)</span>
+    <span class="s1">).astype(int)</span>
+
+    <span class="s1">df = pd.DataFrame({</span>
+        <span class="s4">'temperature'</span><span class="s1">: temp,</span>
+        <span class="s4">'spin_speed'</span><span class="s1">: speed,</span>
+        <span class="s4">'solvent_ratio'</span><span class="s1">: ratio,</span>
+        <span class="s4">'deposition_time'</span><span class="s1">: time,</span>
+        <span class="s4">'success'</span><span class="s1">: success })</span>
+    <span class="s0">return </span><span class="s1">df</span>
+
+
+<span class="s0">def </span><span class="s1">write_to_csv(df, fname=</span><span class="s4">&quot;materials_data.csv&quot;</span><span class="s1">):</span>
+    <span class="s2">&quot;&quot;&quot; 
+    Appends new data to a CSV file (or creates it if it doesn't exist). 
+ 
+    Parameters: 
+        df (pd.DataFrame): New data to save. 
+        fname (str): File name for the dataset. 
+    &quot;&quot;&quot;</span>
+    <span class="s0">if </span><span class="s1">os.path.exists(fname):</span>
+        <span class="s1">existing = pd.read_csv(fname)</span>
+        <span class="s1">df = pd.concat([existing, df], ignore_index=</span><span class="s0">True</span><span class="s1">)</span>
+    <span class="s1">df.to_csv(fname, index=</span><span class="s0">False</span><span class="s1">)</span>
+
+
+<span class="s0">if </span><span class="s1">__name__ == </span><span class="s4">&quot;__main__&quot;</span><span class="s1">:</span>
+    <span class="s1">d = make_data(</span><span class="s3">20</span><span class="s1">)</span>
+    <span class="s1">write_to_csv(d)</span>
+</pre>
+</body>
+</html>
