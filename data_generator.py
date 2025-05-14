@@ -29,13 +29,13 @@ def make_data(n=100):
     success = (np.random.rand(n) < prob_success).astype(int)
 
     df = pd.DataFrame({
-        'temperature': temp,
-        'spin_speed': speed,
-        'solvent_ratio': ratio,
-        'deposition_time': time,
-        'solute_concentration': concentration,
-        'annealing_time': anneal_time,
-        'success': success
+        'temperature [C]': temp,
+        'spin speed [rpm]': speed,
+        'solvent ratio [-]': ratio,
+        'deposition time [s]': time,
+        'solute concentration [mol/L]': concentration,
+        'annealing time [s]': anneal_time,
+        'success [-]': success
     })
 
     return df

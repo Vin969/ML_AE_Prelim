@@ -16,11 +16,11 @@ def run_model(data_file="materials_data.csv"):
     df = pd.read_csv(data_file).dropna()
 
     features = [
-        "temperature", "spin_speed", "solvent_ratio",
-        "deposition_time", "solute_concentration", "annealing_time"
+        "temperature [C]", "spin speed [rpm]", "solvent ratio [-]",
+        "deposition time [s]", "solute concentration [mol/L]", "annealing time [s]"
     ]
     X = df[features]
-    y = df["success"]
+    y = df["success [-]"]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

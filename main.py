@@ -44,7 +44,7 @@ def save_results_table(coef_df, accuracy, save_path="figures/model_summary.png")
 
     plt.title(f"Logistic Regression Accuracy: {accuracy:.2f}", fontsize=14, pad=0)
 
-    plt.tight_layout(rect = [0.0, 0.0, 1.0, 0.92])
+    plt.tight_layout(rect = [0.0, 0.0, 1.0, 1.0])
     plt.savefig(save_path, dpi=300)
     plt.close()
 
