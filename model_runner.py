@@ -1,25 +1,24 @@
-import os
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
+import statsmodels.api as sm
 
-# model_runner.py
-# Loads data, trains a logistic regression model, and saves evaluation plots.
+## @file model_runner.py
+#  @brief Trains and evaluates a logistic regression model using experimental data.
+#         Returns model predictions, metrics, and statistics.
 
-def run_model(data_file="materials_data.csv", save_dir="figures"):
-    """
-    Trains a logistic regression model on the dataset and saves plots to disk.
+## @brief Runs the logistic regression model and evaluates its performance.
+#  Trains the model, predicts outcomes, computes accuracy, and extracts coefficient statistics.
+#  @param data_file Path to the CSV dataset file.
+#  @return Tuple containing model, test data, predictions, accuracy, coefficients, p-values, and feature names.
+def run_model(data_file="materials_data.csv"):
+    df = pd.read_csv(data_file).dropna()
 
-    Parameters:
-        data_file (str): Path to the CSV file with experiment data.
-        save_dir (str): Folder where plots will be saved.
-    """
-    df = pd.read_csv(data_file)
-
-    features = ["temperature", "spin_speed", "solvent_ratio", "deposition_time"]
+    features = [
+        "temperature", "spin_speed", "solvent_ratio",
+        "deposition_time", "solute_concentration", "annealing_time"
+    ]
     X = df[features]
     y = df["success"]
 
@@ -28,52 +27,13 @@ def run_model(data_file="materials_data.csv", save_dir="figures"):
     model = LogisticRegression(max_iter=1000)
     model.fit(X_train, y_train)
 
+    # Statsmodels for p-values
+    X_train_sm = sm.add_constant(X_train)
+    sm_model = sm.Logit(y_train, X_train_sm).fit(disp=0)
+    p_values = sm_model.pvalues[1:]
+
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)[:, 1]
-
     acc = accuracy_score(y_test, y_pred)
-    print("Logistic Regression Accuracy:", round(acc, 2))
 
-    # Make sure the output folder exists
-    os.makedirs(save_dir, exist_ok=True)
-
-    # === Plot 1: Confusion Matrix ===
-    cm = confusion_matrix(y_test, y_pred, labels=[1, 0])
-    plt.figure()
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    plt.title("Confusion Matrix")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.tight_layout()
-    plt.savefig(os.path.join(save_dir, "confusion_matrix.png"), dpi=300)
-    plt.close()
-
-    # === Plot 2: ROC Curve ===
-    fpr, tpr, _ = roc_curve(y_test, y_prob)
-    roc_auc = auc(fpr, tpr)
-
-    plt.figure()
-    plt.plot(fpr, tpr, label=f"AUC = {roc_auc:.2f}")
-    plt.plot([0, 1], [0, 1], linestyle="--", color="gray")
-    plt.title("ROC Curve")
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(os.path.join(save_dir, "roc_curve.png"), dpi=300)
-    plt.close()
-
-    # === Plot 3: Feature Importance ===
-    coeffs = model.coef_[0]
-    importance = pd.Series(coeffs, index=features).sort_values()
-
-    plt.figure()
-    importance.plot(kind="barh", color="skyblue")
-    plt.title("Feature Importance (Model Coefficients)")
-    plt.xlabel("Coefficient Value")
-    plt.tight_layout()
-    plt.savefig(os.path.join(save_dir, "feature_importance.png"), dpi=300)
-    plt.close()
-
-if __name__ == "__main__":
-    run_model()
+    return model, X_test, y_test, y_pred, y_prob, acc, model.coef_[0], p_values, features
