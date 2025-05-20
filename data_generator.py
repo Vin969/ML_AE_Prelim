@@ -3,44 +3,52 @@ import numpy as np
 import os
 
 ## @file data_generator.py
-#  @brief Generates synthetic experimental data for materials synthesis.
-#         Data includes process parameters and a binary success label.
+#  @brief Generates synthetic experimental data for conductive ink deposition experiments.
+#         Outputs include process parameters and resulting electrical resistance.
 
-## @brief Generates a synthetic dataset of materials synthesis experiments.
-#  Includes randomized parameters and probabilistic success labels.
+## @brief Generates a synthetic dataset for conductive ink deposition.
+#  Simulates multiple experimental parameters and a continuous resistance value.
+#  Binary success is determined based on a threshold resistance.
 #  @param n Number of samples to generate.
 #  @return pd.DataFrame The generated dataset.
 def make_data(n=100):
-    temp = np.random.uniform(80, 200, n)
-    speed = np.random.uniform(1000, 4000, n)
-    ratio = np.random.uniform(0.2, 0.8, n)
-    time = np.random.uniform(10, 60, n)
-    concentration = np.random.uniform(0.1, 1.0, n)
-    anneal_time = np.random.uniform(30, 300, n)
+    # Experimental parameters (inputs)
+    flow_rate = np.round(np.random.uniform(1.0, 10.0, n), 2)  # µL/s
+    line_length = np.round(np.random.uniform(10, 100, n), 1)  # mm
+    ink_concentration = np.round(np.random.uniform(30, 70, n), 1)  # wt%
+    drying_time = np.round(np.random.uniform(30, 300, n), 0)  # seconds
+    substrate_temp = np.round(np.random.uniform(20, 80, n), 1)  # °C
+    nozzle_height = np.round(np.random.uniform(0.5, 2.0, n), 2)  # mm
+    # Simulated resistance (Ω), influenced by inputs
+    base_resistance = 5
+    resistance = (
+        base_resistance +
+        (line_length / ink_concentration) * 2.5 +
+        (100 - flow_rate) * 0.1 +
+        (nozzle_height * 3) +
+        np.random.normal(0, 2, n)  # noise
+    )
+    resistance = np.round(resistance, 2)
 
-    prob_success = (
-        (temp > 120).astype(int) +
-        ((1500 < speed) & (speed < 3500)).astype(int) +
-        ((0.3 < ratio) & (ratio < 0.7)).astype(int) +
-        ((0.2 < concentration) & (concentration < 0.8)).astype(int) +
-        ((60 < anneal_time) & (anneal_time < 240)).astype(int)
-    ) / 5.0
+    # Define success as resistance below a threshold (e.g., 15 Ω)
+    success_threshold = 20
+    success = (resistance < success_threshold).astype(int)
 
-    success = (np.random.rand(n) < prob_success).astype(int)
-
+    # Build DataFrame
     df = pd.DataFrame({
-        'temperature [C]': temp,
-        'spin speed [rpm]': speed,
-        'solvent ratio [-]': ratio,
-        'deposition time [s]': time,
-        'solute concentration [mol/L]': concentration,
-        'annealing time [s]': anneal_time,
+        'flow rate [µL/s]': flow_rate,
+        'line length [mm]': line_length,
+        'ink concentration [wt%]': ink_concentration,
+        'drying time [sec]': drying_time,
+        'substrate temperature [°C]': substrate_temp,
+        'nozzle height [mm]': nozzle_height,
+        'resistance [Ω]': resistance,
         'success [-]': success
     })
 
     return df
 
-## @brief Saves a DataFrame to CSV, appending to an existing file if present.
+## @brief Appends data to CSV, creating file if it doesn't exist.
 #  @param df DataFrame to save.
 #  @param fname Output file name (default: "materials_data.csv").
 def write_to_csv(df, fname="materials_data.csv"):

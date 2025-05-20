@@ -16,8 +16,8 @@ def run_model(data_file="materials_data.csv"):
     df = pd.read_csv(data_file).dropna()
 
     features = [
-        "temperature [C]", "spin speed [rpm]", "solvent ratio [-]",
-        "deposition time [s]", "solute concentration [mol/L]", "annealing time [s]"
+        "flow rate [µL/s]", "line length [mm]", "ink concentration [wt%]",
+        "drying time [sec]", "substrate temperature [°C]", "nozzle height [mm]"
     ]
     X = df[features]
     y = df["success [-]"]
